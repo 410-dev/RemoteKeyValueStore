@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>RKVS</title>
+  <title>KeyStorage Service</title>
 </head>
 <body>
-Remote Address: <%= request.getRemoteAddr() %>
+Welcome!
 </body>
 </html>
