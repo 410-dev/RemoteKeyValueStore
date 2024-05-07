@@ -22,16 +22,16 @@ public class Control extends HttpServlet {
         String value = request.getParameter("value");
 
         System.out.println("Action: " + action);
-
-        if (action == null || key == null || path == null) {
-            response.setStatus(400);
-            return;
-        }
-
         System.out.println("Key: " + key);
         System.out.println("Path: " + path);
 
-        if (!Authorization.authorized(request.getSession())) {
+        if (action == null ) {
+            response.setStatus(400);
+            response.getWriter().println("No action specified.");
+            return;
+        }
+
+        if (Authorization.unauthorized(request.getSession())) {
             response.setStatus(401);
             System.out.println("Unauthorized.");
             return;
@@ -41,15 +41,12 @@ public class Control extends HttpServlet {
 
         switch (action) {
             case "write": {
-                System.out.println("Writing to " + path);
-                if (value == null) {
-                    response.setStatus(400);
-                    response.getWriter().println("Value is null.");
-                    return;
-                }
                 try {
-                    System.out.println("Writing to " + path + " with value " + value);
-                    Database.write(path, value, key, false);
+                    if (value == null || path == null) {
+                        response.setStatus(400);
+                        return;
+                    }
+                    Database.write(path, value, key, false, true);
                     response.setStatus(200);
                     System.out.println("Redirecting to /api/" + path);
                     response.sendRedirect(request.getContextPath() + "/api/" + path);
@@ -57,6 +54,20 @@ public class Control extends HttpServlet {
                     System.out.println("Error writing to file: " + e.getMessage());
                     response.setStatus(500);
                     response.getWriter().println("Error writing to file.");
+                    return;
+                }
+            }
+            case "delete": {
+                try {
+                    Database.delete(path);
+                    Authorization.revokeAuth(path);
+                    response.setStatus(200);
+                    System.out.println("Redirecting to mgmt.jsp");
+                    response.sendRedirect(request.getContextPath() + "/mgmt.jsp");
+                } catch (Exception e) {
+                    System.out.println("Error deleting file: " + e.getMessage());
+                    response.setStatus(500);
+                    response.getWriter().println("Error deleting file.");
                     return;
                 }
             }

@@ -5,9 +5,15 @@ import java.util.ArrayList;
 
 public class Database {
 
-    public static void write(String name, String value, String key, boolean append) throws IOException {
+    private static String getRoot() {
         String root = System.getProperty("user.home");
         root += "/website/data/RemoteKeyValueStore/";
+        return root.replace("/", File.separator);
+    }
+
+    public static void write(String name, String value, String key, boolean append, boolean forceAbsolutePath) throws IOException {
+        String root = forceAbsolutePath ? getRoot() : "";
+        String id = name;
         name = root + name;
         name = name.replace("/", File.separator);
 
@@ -16,15 +22,16 @@ public class Database {
         if (!parent.exists() && !parent.mkdirs()) {
             return;
         }
-        Authorization.makeAuth(name, key);
+        if (key != null && !key.isEmpty()) Authorization.makeAuth(id, key);
+
+        System.out.println("Writing to " + name + " with value " + value);
         BufferedWriter writer = new BufferedWriter(new FileWriter(file, append));
         writer.write(value);
         writer.close();
     }
 
     public static String read(String name) throws IOException {
-        String root = System.getProperty("user.home");
-        root += "/website/data/RemoteKeyValueStore/";
+        String root = getRoot();
         name = root + name;
         name = name.replace("/", File.separator);
 
@@ -57,9 +64,7 @@ public class Database {
     }
 
     public static String list() {
-        String root = System.getProperty("user.home");
-        root += "/website/data/RemoteKeyValueStore/";
-        root = root.replace("/", File.separator);
+        String root = getRoot();
         ArrayList<String> list = recursiveSearch(root);
         StringBuilder builder = new StringBuilder();
         for (String s : list) {
@@ -67,5 +72,16 @@ public class Database {
             builder.append("\n");
         }
         return builder.toString();
+    }
+
+    public static void delete(String path) {
+        String root = getRoot();
+        path = root + path;
+        path = path.replace("/", File.separator);
+
+        File file = new File(path);
+        if (file.exists()) {
+            file.delete();
+        }
     }
 }

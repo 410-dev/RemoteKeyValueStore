@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -30,38 +31,53 @@ public class Authorization extends HttpServlet {
 
     public static boolean pass(String id, String key) {
         try {
-            String authValue = Database.read("/auth/" + id);
-            return authValue != null && authValue.equals(CoreSHA.hash512(key));
+            System.out.println("Checking pass for " + id + " with key " + key + " at " + ("/auth/" + id.replace(File.separator, ".").replace("/", ".")));
+            String authValue = Database.read("/auth/" + id.replace(File.separator, ".").replace("/", "."));
+            System.out.println("Condition: " + ((authValue == null && (key == null || key.isEmpty())) || (authValue != null && authValue.equals(CoreSHA.hash512(key)))));
+            return (authValue == null && (key == null || key.isEmpty())) || (authValue != null && authValue.equals(CoreSHA.hash512(key)));
         } catch (Exception e) {
             return false;
         }
     }
 
-    public static boolean makeAuth(String id, String key) {
+    public static void makeAuth(String id, String key) {
         try {
-            Database.write("/auth/" + id, CoreSHA.hash512(key), "",false);
-            return true;
+            System.out.println("Making auth for " + id + " with key " + key);
+            Database.write("/auth/" + id.replace(File.separator, ".").replace("/", "."), CoreSHA.hash512(key), "",false, true);
         } catch (Exception e) {
-            return false;
+            e.printStackTrace();
         }
     }
 
-    public static boolean authorized(HttpSession session) {
+    public static void revokeAuth(String id) {
+        try {
+            System.out.println("Revoking auth for " + id);
+            String path = "/auth/" + id.replace(File.separator, ".").replace("/", ".");
+            if (Database.read(path) == null) {
+                return;
+            }
+            Database.delete(path);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean unauthorized(HttpSession session) {
         if (session == null) {
             System.out.println("Session is null.");
-            return false;
+            return true;
         }
         if (session.getAttribute("main.authorization") == null) {
             System.out.println("Session does not have main.authorization.");
-            return false;
+            return true;
         }
         try {
             String authValue = Database.read("/auth/main.authorization");
             System.out.println("Auth value: " + authValue + " Session value: " + session.getAttribute("main.authorization"));
-            return authValue != null && authValue.equals(session.getAttribute("main.authorization"));
+            return authValue == null || !authValue.equals(session.getAttribute("main.authorization"));
         } catch (Exception e) {
             System.out.println("Error reading auth value.");
-            return false;
+            return true;
         }
     }
 

@@ -25,6 +25,11 @@ public class API extends HttpServlet {
         String value = "";
         try {
             value = Database.read(path);
+            boolean passed = Authorization.pass(path, request.getParameter("auth"));
+            if (!passed) {
+                response.setStatus(401);
+                return;
+            }
         } catch (Exception e) {
             response.setStatus(500);
         }
@@ -32,21 +37,6 @@ public class API extends HttpServlet {
         if (value == null) {
             response.setStatus(404);
             return;
-        }
-
-        String[] lines = value.split("\n");
-        if (lines[0].equals("[LOCKED]")) {
-            // Check if parameter has "auth"
-            String key = request.getParameter("auth");
-            if (key == null) {
-                response.setStatus(401);
-                return;
-            }
-            if (!Authorization.pass(path.replace("/", "."), key)) {
-                response.setStatus(401);
-                return;
-            }
-            value = value.substring("[LOCKED]\n".length());
         }
 
         response.setStatus(200);
