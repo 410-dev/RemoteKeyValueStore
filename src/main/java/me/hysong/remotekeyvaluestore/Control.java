@@ -56,6 +56,7 @@ public class Control extends HttpServlet {
                     response.getWriter().println("Error writing to file.");
                     return;
                 }
+                break;
             }
             case "delete": {
                 try {
@@ -70,6 +71,7 @@ public class Control extends HttpServlet {
                     response.getWriter().println("Error deleting file.");
                     return;
                 }
+                break;
             }
             default:
                 response.setStatus(400);
