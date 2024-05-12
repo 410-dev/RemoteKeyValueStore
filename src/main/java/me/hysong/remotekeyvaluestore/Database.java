@@ -41,7 +41,13 @@ public class Database {
         }
 
         BufferedReader reader = new BufferedReader(new FileReader(file));
-        String value = reader.readLine();
+        StringBuilder builder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+            builder.append("\n");
+        }
+        String value = builder.toString().trim();
         reader.close();
         return value;
     }
